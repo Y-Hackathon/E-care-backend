@@ -1,0 +1,55 @@
+steps:
+# creates '.env' file based on substitution variables
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'printenv > .env']
+  env:
+    - '_APP_ENV=$_APP_ENV'
+    - '_FIREBASE_ADMIN_AUTH_PROVIDER_CERT_URL=$_FIREBASE_ADMIN_AUTH_PROVIDER_CERT_URL'
+    - '_FIREBASE_ADMIN_AUTH_URI=$_FIREBASE_ADMIN_AUTH_URI'
+    - '_FIREBASE_ADMIN_CLIENT_EMAIL=$_FIREBASE_ADMIN_CLIENT_EMAIL'
+    - '_FIREBASE_ADMIN_CLIENT_ID=$_FIREBASE_ADMIN_CLIENT_ID'
+    - '_FIREBASE_ADMIN_CLIENT_CERT_URL=$_FIREBASE_ADMIN_CLIENT_CERT_URL'
+    - '_FIREBASE_ADMIN_PRIVATE_KEY=$_FIREBASE_ADMIN_PRIVATE_KEY'
+    - '_FIREBASE_ADMIN_PRIVATE_KEY_ID=$_FIREBASE_ADMIN_PRIVATE_KEY_ID'
+    - '_FIREBASE_PROJECT_ID=$_FIREBASE_PROJECT_ID'
+    - '_FIREBASE_ADMIN_PRIVATE_KEY=$_FIREBASE_ADMIN_TOKEN_URI'
+    - '_PROJECT_ID=$_PROJECT_ID'
+    - '_IMAGE=$_IMAGE'
+    - '_SERVICE_NAME=$_SERVICE_NAME'
+    - '_REGION=$_REGION'
+
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$_PROJECT_ID/$_IMAGE', '.']
+
+# Push the image to Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$_PROJECT_ID/$_IMAGE']
+
+# Lint the code
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'docker run gcr.io/$_PROJECT_ID/$_IMAGE npm run lint']
+
+# Run the tests
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'docker run gcr.io/$_PROJECT_ID/$_IMAGE npm run test']
+
+# Deploy image to Cloud Run
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'run'
+  - 'deploy'
+  - '$_SERVICE_NAME'
+  - '--image'
+  - 'gcr.io/$_PROJECT_ID/$_IMAGE'
+  - '--region'
+  - '$_REGION'
+  - '--platform'
+  - 'managed'
+  - '--allow-unauthenticated'
+
+images:
+- gcr.io/$_PROJECT_ID/$_IMAGE
