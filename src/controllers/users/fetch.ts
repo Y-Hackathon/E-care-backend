@@ -1,7 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
 
 import firebaseAdmin from '../../firebase';
-import { IUser } from './types';
+import { IAppointment } from '../appointments/types';
+import { IUser, IUserWithAppointment } from './types';
 
 const { firestore } = firebaseAdmin;
 const { OK, INTERNAL_SERVER_ERROR, FORBIDDEN } = StatusCodes;
@@ -10,7 +11,10 @@ const Fetch = {
 	async fetchUsers(req: any, res: any): Promise<any> {
 		try {
 			// create user on firebase authentication
-			const usersSnapshot = await firestore.collection('users').get();
+			const [usersSnapshot, appointmentsSnapshot] = await Promise.all([
+				firestore.collection('users').get(),
+				firestore.collection('appointments').get(),
+			]);
 
 			if (usersSnapshot.empty) {
 				return res.status(OK).send({
@@ -20,7 +24,37 @@ const Fetch = {
 				});
 			}
 
-			const users: IUser[] = usersSnapshot.docs.map(doc => doc.data() as IUser);
+			const appointmentByUserId = appointmentsSnapshot.docs.reduce(
+				(acc, appointmentSnapshot) => {
+					const appointmentData = appointmentSnapshot.data() as IAppointment;
+
+					if (appointmentData) {
+						const { userId } = appointmentData;
+
+						if (userId) {
+							acc[userId] = [];
+						}
+
+						acc[userId].push(appointmentData);
+					}
+
+					return acc;
+				},
+				{} as { [key: string]: IAppointment[] }
+			);
+
+			const users: IUserWithAppointment[] = usersSnapshot.docs.map(doc => {
+				const user = doc.data() as IUserWithAppointment;
+				const { userId = '' } = user;
+
+				const appointment = appointmentByUserId[userId];
+
+				if (appointment) {
+					user.appointment = appointment;
+				}
+
+				return user;
+			});
 
 			return res.status(OK).send({
 				data: {
@@ -45,7 +79,10 @@ const Fetch = {
 
 		try {
 			// sign in user on firebase authentication
-			const userSnapshot = await firestore.collection('users').doc(userId).get();
+			const [userSnapshot, appointmentSnapshot] = await Promise.all([
+				firestore.collection('users').doc(userId).get(),
+				firestore.collection('appointments').where('userId', '==', userId).get(),
+			]);
 
 			// check if user exists and is an admin and not a suspended admin
 			if (!userSnapshot.exists) {
@@ -61,8 +98,10 @@ const Fetch = {
 
 			const user = userSnapshot.data() as IUser;
 
+			const appointments = appointmentSnapshot.docs.map(doc => doc.data() as IAppointment);
+
 			return res.status(OK).send({
-				data: { user },
+				data: { user, appointments },
 				message: 'User details retrieved successfully',
 				status: 'USER_DETAILS_RETRIEVED_SUCCESSFULLY',
 			});

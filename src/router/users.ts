@@ -10,7 +10,7 @@ const { fetchUsers, fetchUserById } = users.fetch;
 const { fetchUserSchema } = ValidationSchema;
 
 // Fetch endpoints
-router.get('/fetchUsers', fetchUsers);
-router.get('/fetchUsers/:userId', joiValidator(fetchUserSchema), fetchUserById);
+router.get('/fetch', fetchUsers);
+router.get('/fetch/:userId', joiValidator(fetchUserSchema), fetchUserById);
 
 export default router;

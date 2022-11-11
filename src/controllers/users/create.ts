@@ -1,16 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
-import {
-	createUserWithEmailAndPassword,
-	initializeAuth,
-	signInWithEmailAndPassword,
-} from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 import firebaseAdmin from '../../firebase';
 import { CreateUserReqData, IUser, UserSignInReqData } from './types';
 import { generateUserData } from './utils';
 import { FORBIDDEN_MESSAGE } from './constants';
 
-const { auth, firestore, firebaseApp } = firebaseAdmin;
+const { auth, firestore, firebaseAuth } = firebaseAdmin;
 const { CREATED, OK, INTERNAL_SERVER_ERROR, FORBIDDEN, BAD_REQUEST } = StatusCodes;
 
 const Create = {
@@ -19,8 +15,6 @@ const Create = {
 
 		const { password, ...passwordFreeData } = createAdminReqData;
 		const { email } = createAdminReqData;
-
-		const firebaseAuth = initializeAuth(firebaseApp);
 
 		try {
 			// create user on firebase authentication
@@ -74,8 +68,6 @@ const Create = {
 		const createAdminReqData: UserSignInReqData = body;
 		const { email, password } = createAdminReqData;
 
-		const firebaseAuth = initializeAuth(firebaseApp);
-
 		try {
 			// sign in user on firebase authentication
 			const { user } = await signInWithEmailAndPassword(firebaseAuth, email, password);
@@ -107,7 +99,8 @@ const Create = {
 				});
 			}
 
-			const { isSuspended, isArchived } = userSnapshot.data() as IUser;
+			const userData = userSnapshot.data() as IUser;
+			const { isSuspended, isArchived } = userData;
 
 			if (isSuspended || isArchived) {
 				console.log('FORBIDDEN: You are not authorized to sign in');
@@ -120,7 +113,7 @@ const Create = {
 			}
 
 			return res.status(OK).send({
-				data: { userId, token },
+				data: { user: userData, token },
 				message: 'User signed in successfully',
 				status: 'USER_SIGNED_IN_SUCCESSFULLY',
 			});

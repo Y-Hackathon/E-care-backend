@@ -1,11 +1,9 @@
-import { IAppointment } from '../appointments/types';
-
 export enum Gender {
 	MALE = 'MALE',
 	FEMALE = 'FEMALE',
 }
 
-export interface IUser {
+export interface IDoctor {
 	addressId?: string;
 	id: string;
 	email: string;
@@ -17,36 +15,37 @@ export interface IUser {
 	createdAt: number;
 	dateOfBirth: number;
 	gender: Gender;
+	inductionDate: number;
+	patientCount?: number;
+	specialty: string;
+	doctorId: string;
 	updatedAt: number;
 	updatedBy: string;
-	userId: string;
 	profilePhotoUrl?: string;
 }
 
-export interface IUserWithAppointment extends IUser {
-	appointment?: IAppointment[];
-}
-
-export type BaseUser = {
+export type BaseDoctor = {
 	email: string;
 	firstName: string;
 	lastName: string;
 	phoneNumber: string;
-	dateOfBirth: number;
 	gender: Gender;
+	dateOfBirth: number;
+	inductionDate: number;
+	specialty: string;
 };
 
-export type CreateUserReqData = BaseUser & {
+export type CreateDoctorReqData = BaseDoctor & {
 	password: string;
 };
 
-export type GenerateUserData = (
-	baseData: BaseUser & {
-		userId: string;
+export type GenerateDoctorData = (
+	baseData: BaseDoctor & {
+		doctorId: string;
 	}
-) => IUser;
+) => IDoctor;
 
-export type UserSignInReqData = {
+export type DoctorSignInReqData = {
 	email: string;
 	password: string;
 };

@@ -9,6 +9,8 @@ export const generateUserData: GenerateUserData = baseData => {
 
 	return {
 		...remainingBaseData,
+		profilePhotoUrl: '',
+		addressId: '',
 		isArchived: false,
 		isSuspended: false,
 		createdAt: nowTimestamp,
