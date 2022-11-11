@@ -1,8 +1,18 @@
 import express, { Request, Response } from 'express';
 import firebaseAdmin from '../firebase';
-// import { getFirestore } from 'firebase-admin/firestore';
 
-const router = express.Router();
+import usersRoute from './users';
+import ValidationSchema from './validationSchema';
+import { users } from '../controllers';
+import { joiValidator } from '../utilityFunctions';
+
+const router = express.Router({ caseSensitive: true });
+const { createUser, signInUser } = users.create;
+
+const { createUserSchema, signInUserSchema } = ValidationSchema;
+
+router.put('/user/signin', joiValidator(signInUserSchema), signInUser);
+router.put('/user/signUp', joiValidator(createUserSchema), createUser);
 
 const { auth, firestore } = firebaseAdmin;
 
@@ -37,10 +47,6 @@ router.use(async (req: any, res: any, next: any) => {
 	}
 });
 
-router.post('/hello/world', (req: any, res: any) => {
-	console.log(`Hello world!`);
-
-	res.status(200).send();
-});
+router.use('/users', usersRoute);
 
 export default router;

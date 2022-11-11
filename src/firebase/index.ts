@@ -1,16 +1,27 @@
 import admin from 'firebase-admin';
-import { initializeApp } from 'firebase-admin/app';
+import { initializeApp } from 'firebase/app';
 
 import config from '../config';
 
-const { adminConfig } = config;
+const { adminConfig, firebaseConfig } = config;
+const { apiKey, authDomain, messagingSenderId, databaseURL, storageBucket } = firebaseConfig;
 
-initializeApp({
+admin.initializeApp({
 	credential: admin.credential.cert(adminConfig),
-	databaseURL: 'https://yassir-e-care-hacakton.firebaseio.com',
+	databaseURL,
+	storageBucket,
+});
+
+const firebaseApp = initializeApp({
+	apiKey,
+	authDomain,
+	databaseURL,
+	messagingSenderId,
+	storageBucket,
 });
 
 export default {
 	auth: admin.auth(),
 	firestore: admin.firestore(),
+	firebaseApp,
 };
