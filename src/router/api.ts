@@ -1,8 +1,29 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import firebaseAdmin from '../firebase';
-// import { getFirestore } from 'firebase-admin/firestore';
 
-const router = express.Router();
+import usersRoute from './users';
+import doctorsRoute from './doctors';
+import appointmentsRoute from './appointments';
+import ValidationSchema from './validationSchema';
+import { users, doctors } from '../controllers';
+import { joiValidator } from '../utilityFunctions';
+
+const router = express.Router({ caseSensitive: true });
+const { createUser, signInUser } = users.create;
+const { createDoctor, signInDoctor } = doctors.create;
+
+const {
+	createUserSchema,
+	createDoctorSchema,
+	signInUserSchema,
+	signInDoctorSchema,
+} = ValidationSchema;
+
+router.put('/user/signin', joiValidator(signInUserSchema), signInUser);
+router.post('/user/signup', joiValidator(createUserSchema), createUser);
+
+router.put('/doctor/signin', joiValidator(signInDoctorSchema), signInDoctor);
+router.post('/doctor/signup', joiValidator(createDoctorSchema), createDoctor);
 
 const { auth, firestore } = firebaseAdmin;
 
@@ -37,10 +58,8 @@ router.use(async (req: any, res: any, next: any) => {
 	}
 });
 
-router.post('/hello/world', (req: any, res: any) => {
-	console.log(`Hello world!`);
-
-	res.status(200).send();
-});
+router.use('/users', usersRoute);
+router.use('/doctors', doctorsRoute);
+router.use('/appointments', appointmentsRoute);
 
 export default router;
